@@ -365,7 +365,7 @@ async function editActivity(id) {
   document.getElementById('activityRisk').value = activity.risk_level;
   document.getElementById('activityDate').value = activity.activity_date;
   document.getElementById('activityStatus').value = activity.status;
-  document.getElementById('activityOwner').value = activity.assigned_to || '';
+  document.getElementById('activityOwner').value = activity.created_by || '';
   document.getElementById('activityBackupPerson').value = activity.backup_person || '';
   document.getElementById('activityBusinessBenefit').value = activity.business_benefit || '';
   document.getElementById('activityTcoValue').value = activity.tco_value || '';

@@ -333,6 +333,7 @@ app.post('/api/activities', authenticateToken, (req, res) => {
     risk_level,
     activity_date,
     status,
+    assigned_to,
     backup_person,
     department,
     it_type,
@@ -342,7 +343,8 @@ app.post('/api/activities', authenticateToken, (req, res) => {
   } = req.body;
 
   const sprint = calculateSprint(activity_date);
-  const created_by = req.user.id;
+  // Admin can assign to others, clients create for themselves
+  const created_by = assigned_to || req.user.id;
   const activity_year = new Date(activity_date).getFullYear();
 
   db.run(`
@@ -418,6 +420,7 @@ app.put('/api/activities/:id', authenticateToken, (req, res) => {
       risk_level,
       activity_date,
       status,
+      assigned_to,
       backup_person,
       department,
       it_type,
@@ -428,6 +431,9 @@ app.put('/api/activities/:id', authenticateToken, (req, res) => {
 
     const sprint = calculateSprint(activity_date);
     const activity_year = new Date(activity_date).getFullYear();
+    
+    // If admin is reassigning, update created_by
+    const newCreatedBy = (userRole === 'admin' && assigned_to) ? assigned_to : activity.created_by;
 
     db.run(`
       UPDATE activities SET
@@ -439,6 +445,7 @@ app.put('/api/activities/:id', authenticateToken, (req, res) => {
         activity_date = ?,
         sprint = ?,
         status = ?,
+        created_by = ?,
         backup_person = ?,
         department = ?,
         it_type = ?,
@@ -451,7 +458,7 @@ app.put('/api/activities/:id', authenticateToken, (req, res) => {
       WHERE id = ?
     `,
       [activity_name, description, gxp_scope, priority, risk_level, 
-       activity_date, sprint, status, backup_person, department, it_type,
+       activity_date, sprint, status, newCreatedBy, backup_person, department, it_type,
        gxp_impact, business_benefit, tco_value, activity_year, userId, activityId],
       function(err) {
         if (err) {

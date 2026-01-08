@@ -339,7 +339,10 @@ async function loadMyActivities() {
     
     allActivities = await activitiesRes.json();
     allUsers = await usersRes.json();
-    myActivities = allActivities.filter(a => a.created_by === currentUser.id);
+    // Include activities created by user OR where user is backup person
+    myActivities = allActivities.filter(a => 
+      a.created_by === currentUser.id || a.backup_person === currentUser.id
+    );
     
     // Populate backup person dropdown
     const backupSelect = document.getElementById('activityBackupPerson');
