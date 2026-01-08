@@ -16,6 +16,21 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static('public'));
 
+// Health check endpoint
+app.get('/health', (req, res) => {
+  db.get('SELECT COUNT(*) as count FROM users', (err, result) => {
+    if (err) {
+      return res.status(500).json({ status: 'error', error: err.message });
+    }
+    res.json({ 
+      status: 'ok', 
+      database: 'connected',
+      users: result.count,
+      timestamp: new Date().toISOString()
+    });
+  });
+});
+
 // ============= AUTH ROUTES =============
 
 // Login
