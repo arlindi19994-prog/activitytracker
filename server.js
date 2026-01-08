@@ -617,6 +617,7 @@ cron.schedule('0 9 * * 1', () => {
 // ============= START SERVER =============
 
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server running on port ${PORT}`);
+  console.log('Environment:', process.env.NODE_ENV || 'development');
   console.log('Default admin credentials: username=admin, password=admin123');
 });

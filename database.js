@@ -56,17 +56,23 @@ function initializeDatabase() {
   )`);
 
   // Create default admin user
-  const adminPassword = bcrypt.hashSync('admin123', 10);
-  db.run(`INSERT OR IGNORE INTO users (id, username, password, role) VALUES (1, 'admin', ?, 'admin')`, 
-    [adminPassword], 
-    (err) => {
-      if (err) {
-        console.log('Admin user already exists');
-      } else {
-        console.log('Default admin user created (username: admin, password: admin123)');
-      }
+  db.get('SELECT * FROM users WHERE username = ?', ['admin'], (err, user) => {
+    if (!user) {
+      const adminPassword = bcrypt.hashSync('admin123', 10);
+      db.run(`INSERT INTO users (username, password, role) VALUES (?, ?, ?)`, 
+        ['admin', adminPassword, 'admin'], 
+        (err) => {
+          if (err) {
+            console.error('Error creating admin user:', err);
+          } else {
+            console.log('Default admin user created (username: admin, password: admin123)');
+          }
+        }
+      );
+    } else {
+      console.log('Admin user already exists');
     }
-  );
+  });
 }
 
 // Helper function to calculate Sprint based on date
