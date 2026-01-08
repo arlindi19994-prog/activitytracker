@@ -38,9 +38,22 @@ function initializeDatabase() {
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     last_edited_by INTEGER,
     last_edited_at DATETIME,
+    backup_person INTEGER,
+    department TEXT,
+    it_type TEXT,
+    gxp_impact TEXT,
+    business_benefit TEXT,
+    tco_value DECIMAL(15,2),
+    activity_year INTEGER,
     FOREIGN KEY (created_by) REFERENCES users(id),
-    FOREIGN KEY (last_edited_by) REFERENCES users(id)
-  )`);
+    FOREIGN KEY (last_edited_by) REFERENCES users(id),
+    FOREIGN KEY (backup_person) REFERENCES users(id)
+  )`, (err) => {
+    if (!err) {
+      // Run migrations for existing databases
+      migrateDatabase();
+    }
+  });
 
   // Edit history table
   db.run(`CREATE TABLE IF NOT EXISTS edit_history (
@@ -72,6 +85,30 @@ function initializeDatabase() {
     } else {
       console.log('Admin user already exists');
     }
+  });
+}
+
+// Migration function to add new columns to existing databases
+function migrateDatabase() {
+  const columnsToAdd = [
+    'backup_person INTEGER',
+    'department TEXT',
+    'it_type TEXT',
+    'gxp_impact TEXT',
+    'business_benefit TEXT',
+    'tco_value DECIMAL(15,2)',
+    'activity_year INTEGER'
+  ];
+
+  columnsToAdd.forEach(columnDef => {
+    const columnName = columnDef.split(' ')[0];
+    db.run(`ALTER TABLE activities ADD COLUMN ${columnDef}`, (err) => {
+      if (err && !err.message.includes('duplicate column')) {
+        console.log(`Column ${columnName} migration skipped (already exists or table structure different)`);
+      } else if (!err) {
+        console.log(`Added column: ${columnName}`);
+      }
+    });
   });
 }
 
