@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Activity Tracker</title>
+  <link rel="stylesheet" href="styles.css?v=4">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <button class="mobile-menu-toggle" id="mobileMenuToggle">☰</button>
+
+  <div class="dashboard">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <h2>🎯 Activity Tracker</h2>
+        <p class="user-role">Client Dashboard</p>
+        <p style="font-size: 0.85em; color: rgba(255,255,255,0.7); margin-top: 5px;" id="currentUser"></p>
+      </div>
+      
+      <nav>
+        <ul class="nav-menu">
+          <li class="nav-item">
+            <a href="#" class="nav-link active" data-section="myactivities">
+              <span class="icon">📋</span>
+              <span>My Activities</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link" data-section="allactivities">
+              <span class="icon">👁️</span>
+              <span>All Activities</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link" data-section="profile">
+              <span class="icon">⚙️</span>
+              <span>Settings</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+      
+      <button class="btn logout-btn" id="logoutBtn">
+        <span>🚪</span>
+        <span>Logout</span>
+      </button>
+    </aside>
+
+    <main class="main-content">
+      <!-- My Activities Section -->
+      <section id="myactivitiesSection" class="content-section">
+        <div class="header">
+          <h1>My Activities Dashboard</h1>
+          <div class="header-actions">
+            <button class="btn btn-primary" id="addActivityBtn">
+              <span>➕</span>
+              <span>Add Activity</span>
+            </button>
+            <button class="btn btn-success" id="exportPdfBtn">
+              <span>📄</span>
+              <span>Export PDF</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-value" id="myTotalActivities">0</div>
+            <div class="stat-label">Total Activities</div>
+          </div>
+          <div class="stat-card warning">
+            <div class="stat-value" id="myPlannedActivities">0</div>
+            <div class="stat-label">Planned</div>
+          </div>
+          <div class="stat-card warning">
+            <div class="stat-value" id="myInProgressActivities">0</div>
+            <div class="stat-label">In Progress</div>
+          </div>
+          <div class="stat-card success">
+            <div class="stat-value" id="myCompletedActivities">0</div>
+            <div class="stat-label">Completed</div>
+          </div>
+        </div>
+
+        <!-- Advanced Charts Row -->
+        <div class="charts-grid">
+          <div class="card chart-card">
+            <div class="card-header">
+              <h3 class="card-title">📊 Status Distribution</h3>
+            </div>
+            <canvas id="statusChart"></canvas>
+          </div>
+
+          <div class="card chart-card">
+            <div class="card-header">
+              <h3 class="card-title">🎯 Priority Breakdown</h3>
+            </div>
+            <canvas id="priorityChart"></canvas>
+          </div>
+        </div>
+
+        <div class="charts-grid">
+          <div class="card chart-card">
+            <div class="card-header">
+              <h3 class="card-title">📅 Sprint Progress</h3>
+            </div>
+            <canvas id="sprintChart"></canvas>
+          </div>
+
+          <div class="card chart-card">
+            <div class="card-header">
+              <h3 class="card-title">⚡ Monthly Activity Trend</h3>
+            </div>
+            <canvas id="trendChart"></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">🔍 Filter Activities</h3>
+          </div>
+          <div class="filters">
+            <div class="filter-group">
+              <label>Start Date</label>
+              <input type="date" id="myFilterStartDate" class="form-control">
+            </div>
+            <div class="filter-group">
+              <label>End Date</label>
+              <input type="date" id="myFilterEndDate" class="form-control">
+            </div>
+            <div class="filter-group">
+              <label>Sprint</label>
+              <select id="myFilterSprint" class="form-control">
+                <option value="">All Sprints</option>
+                <option value="1">Sprint 1 (Jan-Mar)</option>
+                <option value="2">Sprint 2 (Apr-Jun)</option>
+                <option value="3">Sprint 3 (Jul-Sep)</option>
+                <option value="4">Sprint 4 (Oct-Dec)</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label>Status</label>
+              <select id="myFilterStatus" class="form-control">
+                <option value="">All Status</option>
+                <option value="Planned">Planned</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Completed">Completed</option>
+                <option value="Cancelled">Cancelled</option>
+                <option value="On Hold">On Hold</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">📋 My Activities List</h3>
+            <div class="badge" style="background: var(--primary-color); color: white; font-size: 0.9em;">
+              <span id="filteredCount">0</span> activities
+            </div>
+          </div>
+          <div class="table-container">
+            <table id="myActivitiesTable">
+              <thead>
+                <tr>
+                  <th>Activity Name</th>
+                  <th>Department</th>
+                  <th>GXP</th>
+                  <th>Priority</th>
+                  <th>Risk</th>
+                  <th>Date</th>
+                  <th>Sprint</th>
+                  <th>Status</th>
+                  <th>Backup</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- All Activities Section -->
+      <section id="allactivitiesSection" class="content-section d-none">
+        <div class="header">
+          <h1>All Activities</h1>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Sprint Progress</h2>
+          </div>
+          <div id="sprintProgress"></div>
+        </div>
+
+        <div class="card">
+          <div class="filters">
+            <div class="filter-group">
+              <label>Start Date</label>
+              <input type="date" id="allFilterStartDate" class="form-control">
+            </div>
+            <div class="filter-group">
+              <label>End Date</label>
+              <input type="date" id="allFilterEndDate" class="form-control">
+            </div>
+            <div class="filter-group">
+              <label>Sprint</label>
+              <select id="allFilterSprint" class="form-control">
+                <option value="">All Sprints</option>
+                <option value="1">Sprint 1 (Jan-Mar)</option>
+                <option value="2">Sprint 2 (Apr-Jun)</option>
+                <option value="3">Sprint 3 (Jul-Sep)</option>
+                <option value="4">Sprint 4 (Oct-Dec)</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label>Status</label>
+              <select id="allFilterStatus" class="form-control">
+                <option value="">All Status</option>
+                <option value="Planned">Planned</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Completed">Completed</option>
+                <option value="Cancelled">Cancelled</option>
+                <option value="On Hold">On Hold</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="table-container">
+            <table id="allActivitiesTable">
+              <thead>
+                <tr>
+                  <th>Activity Name</th>
+                  <th>GXP</th>
+                  <th>Priority</th>
+                  <th>Risk</th>
+                  <th>Date</th>
+                  <th>Sprint</th>
+                  <th>Status</th>
+                  <th>Created By</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Profile Section -->
+      <section id="profileSection" class="content-section d-none">
+        <div class="header">
+          <h1>Settings</h1>
+        </div>
+
+        <div class="card">
+          <h3 class="card-title">Change Password</h3>
+          <form id="changePasswordForm" style="max-width: 500px;">
+            <div class="form-group">
+              <label>Current Password</label>
+              <input type="password" id="currentPassword" required>
+            </div>
+            <div class="form-group">
+              <label>New Password</label>
+              <input type="password" id="newPassword" required>
+            </div>
+            <div class="form-group">
+              <label>Confirm New Password</label>
+              <input type="password" id="confirmPassword" required>
+            </div>
+            <div id="passwordMessage"></div>
+            <button type="submit" class="btn btn-primary">Update Password</button>
+          </form>
+        </div>
+
+        <div class="card">
+          <h3 class="card-title">Email Notifications</h3>
+          <form id="notificationForm" style="max-width: 500px;">
+            <div class="form-group">
+              <label>Notification Email</label>
+              <input type="email" id="notifyEmail" placeholder="Enter email for notifications">
+              <small style="color: var(--text-secondary); margin-top: 5px; display: block;">
+                You'll receive reminders 3 days before your activities start
+              </small>
+            </div>
+            <div id="notificationMessage"></div>
+            <button type="submit" class="btn btn-primary">Update & Notify Me</button>
+          </form>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Add/Edit Activity Modal -->
+  <div class="modal" id="activityModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title" id="activityModalTitle">Add Activity</h2>
+        <button class="close-btn" id="closeActivityModal">&times;</button>
+      </div>
+      <form id="activityForm">
+        <input type="hidden" id="activityId">
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label>Activity Name *</label>
+            <input type="text" id="activityName" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Description</label>
+          <textarea id="activityDescription"></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>IT Type *</label>
+            <select id="activityItType" required>
+              <option value="">Select...</option>
+              <option value="Corp IT">Corp IT</option>
+              <option value="Local IT">Local IT</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Department *</label>
+            <select id="activityDepartment" required>
+              <option value="">Select...</option>
+              <option value="Corp IT Cybersecurity">Corp IT Cybersecurity</option>
+              <option value="Corp IT Helpdesk">Corp IT Helpdesk</option>
+              <option value="Corp IT Compliance">Corp IT Compliance</option>
+              <option value="Corp IT Application Solutions">Corp IT Application Solutions</option>
+              <option value="Corp IT Business Technology">Corp IT Business Technology</option>
+              <option value="Corp IT OctaERP Solution">Corp IT OctaERP Solution</option>
+              <option value="Local IT">Local IT</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>GXP Scope *</label>
+            <select id="activityGxp" required>
+              <option value="">Select...</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>GXP Impact *</label>
+            <select id="activityGxpImpact" required>
+              <option value="">Select...</option>
+              <option value="GxP">GxP</option>
+              <option value="non-GxP">non-GxP</option>
+              <option value="indirect GxP">indirect GxP</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Priority *</label>
+            <select id="activityPriority" required>
+              <option value="">Select...</option>
+              <option value="Critical">Critical</option>
+              <option value="High">High</option>
+              <option value="Medium">Medium</option>
+              <option value="Low">Low</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Risk Level *</label>
+            <select id="activityRisk" required>
+              <option value="">Select...</option>
+              <option value="High">High</option>
+              <option value="Medium">Medium</option>
+              <option value="Low">Low</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Activity Date *</label>
+            <input type="date" id="activityDate" required>
+          </div>
+
+          <div class="form-group">
+            <label>Status *</label>
+            <select id="activityStatus" required>
+              <option value="Planned">Planned</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Completed">Completed</option>
+              <option value="Cancelled">Cancelled</option>
+              <option value="On Hold">On Hold</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Backup Person</label>
+          <select id="activityBackupPerson">
+            <option value="">No backup person</option>
+          </select>
+          <small style="color: var(--text-secondary); margin-top: 5px; display: block;">
+            Optional: Assign a backup person for this activity
+          </small>
+        </div>
+
+        <div class="form-group">
+          <label>Business Benefit</label>
+          <textarea id="activityBusinessBenefit" placeholder="Describe the business benefit of this activity"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>TCO Impact/Value (EUR)</label>
+          <input type="number" id="activityTcoValue" step="0.01" placeholder="0.00">
+          <small style="color: var(--text-secondary); margin-top: 5px; display: block;">
+            Estimated Total Cost of Ownership impact
+          </small>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancelActivityBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Activity</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="dashboard.js"></script>
+</body>
+</html>
