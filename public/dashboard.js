@@ -112,19 +112,25 @@ function createStatusChart(activities) {
   
   if (charts.status) charts.status.destroy();
   
+  // Show empty state if no data
+  const total = Object.values(statusCounts).reduce((a, b) => a + b, 0);
+  const chartData = total === 0 ? [1] : Object.values(statusCounts);
+  const chartLabels = total === 0 ? ['No Activities'] : Object.keys(statusCounts);
+  const chartColors = total === 0 ? ['#e2e3e5'] : [
+    '#cce5ff',
+    '#fff3cd',
+    '#d4edda',
+    '#f8d7da',
+    '#e2e3e5'
+  ];
+  
   charts.status = new Chart(ctx, {
     type: 'doughnut',
     data: {
-      labels: Object.keys(statusCounts),
+      labels: chartLabels,
       datasets: [{
-        data: Object.values(statusCounts),
-        backgroundColor: [
-          '#cce5ff',
-          '#fff3cd',
-          '#d4edda',
-          '#f8d7da',
-          '#e2e3e5'
-        ],
+        data: chartData,
+        backgroundColor: chartColors,
         borderWidth: 2,
         borderColor: '#fff'
       }]
@@ -141,6 +147,7 @@ function createStatusChart(activities) {
           }
         },
         tooltip: {
+          enabled: total > 0,
           callbacks: {
             label: function(context) {
               const total = context.dataset.data.reduce((a, b) => a + b, 0);
@@ -167,18 +174,24 @@ function createPriorityChart(activities) {
   
   if (charts.priority) charts.priority.destroy();
   
+  // Show empty state if no data
+  const total = Object.values(priorityCounts).reduce((a, b) => a + b, 0);
+  const chartData = total === 0 ? [1] : Object.values(priorityCounts);
+  const chartLabels = total === 0 ? ['No Activities'] : Object.keys(priorityCounts);
+  const chartColors = total === 0 ? ['#e2e3e5'] : [
+    '#ef233c',
+    '#f77f00',
+    '#ffc107',
+    '#06d6a0'
+  ];
+  
   charts.priority = new Chart(ctx, {
     type: 'pie',
     data: {
-      labels: Object.keys(priorityCounts),
+      labels: chartLabels,
       datasets: [{
-        data: Object.values(priorityCounts),
-        backgroundColor: [
-          '#ef233c',
-          '#f77f00',
-          '#ffc107',
-          '#06d6a0'
-        ],
+        data: chartData,
+        backgroundColor: chartColors,
         borderWidth: 2,
         borderColor: '#fff'
       }]
@@ -193,6 +206,9 @@ function createPriorityChart(activities) {
             padding: 15,
             font: { size: 12 }
           }
+        },
+        tooltip: {
+          enabled: total > 0
         }
       }
     }
