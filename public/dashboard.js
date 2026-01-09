@@ -70,14 +70,28 @@ function setupNavigation() {
       });
       
       // Load section data
-      if (sectionName === 'myactivities') loadMyActivities();
-      if (sectionName === 'allactivities') loadAllActivities();
-      if (sectionName === 'profile') loadProfile();
+      if (sectionName === 'myactivities') {
+        loadMyActivities();
+      }
+      if (sectionName === 'allactivities') {
+        loadAllActivities();
+      }
+      if (sectionName === 'profile') {
+        loadProfile();
+      }
       if (sectionName === 'calendar') {
-        loadMyActivities().then(() => renderCalendar());
+        if (myActivities.length === 0) {
+          loadMyActivities().then(() => renderCalendar());
+        } else {
+          renderCalendar();
+        }
       }
       if (sectionName === 'analytics') {
-        loadMyActivities().then(() => loadAnalytics());
+        if (allActivities.length === 0) {
+          loadAllActivities().then(() => loadAnalytics());
+        } else {
+          loadAnalytics();
+        }
       }
       if (sectionName === 'templates') {
         loadTemplates();
@@ -87,6 +101,14 @@ function setupNavigation() {
       document.getElementById('sidebar').classList.remove('active');
     });
   });
+  
+  // Mobile menu toggle
+  const mobileToggle = document.getElementById('mobileMenuToggle');
+  if (mobileToggle) {
+    mobileToggle.addEventListener('click', () => {
+      document.getElementById('sidebar').classList.toggle('active');
+    });
+  }
 }
 
 function switchSection(sectionName) {
@@ -113,11 +135,6 @@ function switchSection(sectionName) {
   if (sectionName === 'myactivities') loadMyActivities();
   if (sectionName === 'allactivities') loadAllActivities();
 }
-
-// Mobile menu toggle
-document.getElementById('mobileMenuToggle').addEventListener('click', () => {
-  document.getElementById('sidebar').classList.toggle('active');
-});
 
 // Logout
 document.getElementById('logoutBtn').addEventListener('click', () => {
@@ -2179,9 +2196,9 @@ async function useTemplate(templateId) {
     
     // Fill in template data
     if (template.description) document.getElementById('activityDescription').value = template.description;
-    if (template.gxp_scope) document.getElementById('activityGxpScope').value = template.gxp_scope;
+    if (template.gxp_scope) document.getElementById('activityGxp').value = template.gxp_scope;
     if (template.priority) document.getElementById('activityPriority').value = template.priority;
-    if (template.risk_level) document.getElementById('activityRiskLevel').value = template.risk_level;
+    if (template.risk_level) document.getElementById('activityRisk').value = template.risk_level;
     if (template.department) document.getElementById('activityDepartment').value = template.department;
     if (template.it_type) document.getElementById('activityItType').value = template.it_type;
     if (template.gxp_impact) document.getElementById('activityGxpImpact').value = template.gxp_impact;
