@@ -39,6 +39,12 @@
             </a>
           </li>
           <li class="nav-item">
+            <a href="#" class="nav-link" data-section="audit">
+              <span class="icon">📜</span>
+              <span>Audit History</span>
+            </a>
+          </li>
+          <li class="nav-item">
             <a href="#" class="nav-link" data-section="profile">
               <span class="icon">⚙️</span>
               <span>Settings</span>
@@ -205,6 +211,43 @@
                 </tr>
               </thead>
               <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Audit History Section -->
+      <section id="auditSection" class="content-section d-none">
+        <div class="header">
+          <h1>Audit History</h1>
+          <div class="header-actions">
+            <button class="btn btn-primary" id="refreshAuditBtn">
+              <span>🔄</span>
+              <span>Refresh</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">📜 All Activity Modifications</h3>
+            <p style="color: var(--text-secondary); margin-top: 10px;">Complete history of all changes made to activities (last 500 entries)</p>
+          </div>
+          <div class="table-container">
+            <table id="auditHistoryTable">
+              <thead>
+                <tr>
+                  <th>Date & Time</th>
+                  <th>Activity Name</th>
+                  <th>Edited By</th>
+                  <th>Changes Made</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="4" style="text-align: center; padding: 40px;">Loading audit history...</td>
+                </tr>
+              </tbody>
             </table>
           </div>
         </div>

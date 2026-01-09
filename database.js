@@ -45,9 +45,14 @@ function initializeDatabase() {
     business_benefit TEXT,
     tco_value DECIMAL(15,2),
     activity_year INTEGER,
+    owner_id INTEGER,
+    owner_name TEXT,
+    is_shared BOOLEAN DEFAULT 0,
+    unique_identifier TEXT UNIQUE,
     FOREIGN KEY (created_by) REFERENCES users(id),
     FOREIGN KEY (last_edited_by) REFERENCES users(id),
-    FOREIGN KEY (backup_person) REFERENCES users(id)
+    FOREIGN KEY (backup_person) REFERENCES users(id),
+    FOREIGN KEY (owner_id) REFERENCES users(id)
   )`, (err) => {
     if (!err) {
       // Run migrations for existing databases
@@ -64,8 +69,77 @@ function initializeDatabase() {
     field_changed TEXT,
     old_value TEXT,
     new_value TEXT,
+    change_description TEXT,
     FOREIGN KEY (activity_id) REFERENCES activities(id),
     FOREIGN KEY (edited_by) REFERENCES users(id)
+  )`);
+
+  // Comments table
+  db.run(`CREATE TABLE IF NOT EXISTS comments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    activity_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    username TEXT,
+    comment_text TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (activity_id) REFERENCES activities(id),
+    FOREIGN KEY (user_id) REFERENCES users(id)
+  )`);
+
+  // File attachments table
+  db.run(`CREATE TABLE IF NOT EXISTS attachments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    activity_id INTEGER NOT NULL,
+    filename TEXT NOT NULL,
+    original_name TEXT NOT NULL,
+    file_size INTEGER,
+    mime_type TEXT,
+    uploaded_by INTEGER NOT NULL,
+    uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (activity_id) REFERENCES activities(id),
+    FOREIGN KEY (uploaded_by) REFERENCES users(id)
+  )`);
+
+  // Notifications table
+  db.run(`CREATE TABLE IF NOT EXISTS notifications (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    activity_id INTEGER,
+    type TEXT NOT NULL,
+    title TEXT NOT NULL,
+    message TEXT NOT NULL,
+    is_read BOOLEAN DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (activity_id) REFERENCES activities(id)
+  )`);
+
+  // Activity templates table
+  db.run(`CREATE TABLE IF NOT EXISTS activity_templates (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    template_name TEXT NOT NULL,
+    description TEXT,
+    gxp_scope TEXT,
+    priority TEXT,
+    risk_level TEXT,
+    department TEXT,
+    it_type TEXT,
+    gxp_impact TEXT,
+    business_benefit TEXT,
+    created_by INTEGER NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (created_by) REFERENCES users(id)
+  )`);
+
+  // Activity dependencies table
+  db.run(`CREATE TABLE IF NOT EXISTS activity_dependencies (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    activity_id INTEGER NOT NULL,
+    depends_on_activity_id INTEGER NOT NULL,
+    dependency_type TEXT DEFAULT 'blocks',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (activity_id) REFERENCES activities(id),
+    FOREIGN KEY (depends_on_activity_id) REFERENCES activities(id)
   )`);
 
   // Create default admin user
@@ -97,7 +171,14 @@ function migrateDatabase() {
     'gxp_impact TEXT',
     'business_benefit TEXT',
     'tco_value DECIMAL(15,2)',
-    'activity_year INTEGER'
+    'activity_year INTEGER',
+    'owner_id INTEGER',
+    'owner_name TEXT',
+    'is_shared BOOLEAN DEFAULT 0',
+    'unique_identifier TEXT',
+    'change_description TEXT',
+    'progress_percentage INTEGER DEFAULT 0',
+    'is_archived BOOLEAN DEFAULT 0'
   ];
 
   columnsToAdd.forEach(columnDef => {
@@ -109,6 +190,15 @@ function migrateDatabase() {
         console.log(`Added column: ${columnName}`);
       }
     });
+  });
+  
+  // Add change_description column to edit_history table if it doesn't exist
+  db.run(`ALTER TABLE edit_history ADD COLUMN change_description TEXT`, (err) => {
+    if (err && !err.message.includes('duplicate column')) {
+      console.log(`Column change_description migration skipped`);
+    } else if (!err) {
+      console.log(`Added column to edit_history: change_description`);
+    }
   });
 }
 

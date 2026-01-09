@@ -38,8 +38,33 @@
               <span>Settings</span>
             </a>
           </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link" data-section="calendar">
+              <span class="icon">📅</span>
+              <span>Calendar View</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link" data-section="analytics">
+              <span class="icon">📊</span>
+              <span>Performance Analytics</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link" data-section="templates">
+              <span class="icon">📋</span>
+              <span>Templates Library</span>
+            </a>
+          </li>
         </ul>
       </nav>
+      
+      <div style="padding: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
+        <button class="btn" id="themeToggle" style="width: 100%; background: rgba(255,255,255,0.1); color: white; display: flex; align-items: center; justify-content: center; gap: 10px;">
+          <span id="themeIcon">🌙</span>
+          <span id="themeText">Dark Mode</span>
+        </button>
+      </div>
       
       <button class="btn logout-btn" id="logoutBtn">
         <span>🚪</span>
@@ -53,13 +78,30 @@
         <div class="header">
           <h1>My Activities Dashboard</h1>
           <div class="header-actions">
+            <div style="position: relative; margin-right: 10px;">
+              <input type="text" id="globalSearch" placeholder="🔍 Search activities... (Press / to focus)" 
+                     style="padding: 10px 15px; border: 2px solid #ddd; border-radius: 8px; width: 300px; font-size: 14px;" />
+              <div id="searchResults" style="position: absolute; top: 100%; left: 0; right: 0; background: white; border: 2px solid #ddd; border-top: none; border-radius: 0 0 8px 8px; max-height: 400px; overflow-y: auto; display: none; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>
+            </div>
+            <button class="btn" id="notificationBtn" style="position: relative; background: #17a2b8; color: white; padding: 10px 20px; margin-right: 10px;">
+              <span style="font-size: 20px;">🔔</span>
+              <span id="notificationBadge" style="position: absolute; top: -5px; right: -5px; background: #dc3545; color: white; border-radius: 50%; width: 22px; height: 22px; display: none; align-items: center; justify-content: center; font-size: 11px; font-weight: bold;"></span>
+            </button>
             <button class="btn btn-primary" id="addActivityBtn">
               <span>➕</span>
-              <span>Add Activity</span>
+              <span>Add Personal Activity</span>
             </button>
             <button class="btn btn-success" id="exportPdfBtn">
               <span>📄</span>
               <span>Export PDF</span>
+            </button>
+            <button class="btn btn-success" id="exportCsvBtn">
+              <span>📊</span>
+              <span>Export CSV</span>
+            </button>
+            <button class="btn" id="toggleArchived" style="background: #6c757d; color: white;">
+              <span>📦</span>
+              <span>Show Archived</span>
             </button>
           </div>
         </div>
@@ -122,11 +164,11 @@
           </div>
           <div class="filters">
             <div class="filter-group">
-              <label>Start Date</label>
+              <label>Start Target Date</label>
               <input type="date" id="myFilterStartDate" class="form-control">
             </div>
             <div class="filter-group">
-              <label>End Date</label>
+              <label>End Target Date</label>
               <input type="date" id="myFilterEndDate" class="form-control">
             </div>
             <div class="filter-group">
@@ -150,28 +192,73 @@
                 <option value="On Hold">On Hold</option>
               </select>
             </div>
+            <div class="filter-group">
+              <label>Department</label>
+              <select id="myFilterDepartment" class="form-control" multiple size="3">
+                <option value="IT">IT</option>
+                <option value="Quality">Quality</option>
+                <option value="Production">Production</option>
+                <option value="R&D">R&D</option>
+                <option value="Regulatory">Regulatory</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label>Priority</label>
+              <select id="myFilterPriority" class="form-control" multiple size="3">
+                <option value="Critical">Critical</option>
+                <option value="High">High</option>
+                <option value="Medium">Medium</option>
+                <option value="Low">Low</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label>Risk Level</label>
+              <select id="myFilterRisk" class="form-control" multiple size="3">
+                <option value="High">High</option>
+                <option value="Medium">Medium</option>
+                <option value="Low">Low</option>
+              </select>
+            </div>
           </div>
         </div>
 
         <div class="card">
           <div class="card-header">
             <h3 class="card-title">📋 My Activities List</h3>
-            <div class="badge" style="background: var(--primary-color); color: white; font-size: 0.9em;">
-              <span id="filteredCount">0</span> activities
+            <div style="display: flex; align-items: center; gap: 15px;">
+              <div id="bulkActionsBar" style="display: none; align-items: center; gap: 10px;">
+                <span id="selectedCount" style="color: var(--primary-color); font-weight: bold;">0 selected</span>
+                <select id="bulkStatusChange" class="form-control" style="width: auto; padding: 5px 10px;">
+                  <option value="">Change Status...</option>
+                  <option value="Planned">Planned</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Completed">Completed</option>
+                  <option value="Cancelled">Cancelled</option>
+                  <option value="On Hold">On Hold</option>
+                </select>
+                <button class="btn btn-sm" style="background: var(--warning-color); color: white;" id="applyBulkStatus">Apply</button>
+                <button class="btn btn-sm" style="background: var(--text-secondary); color: white;" id="clearSelection">Clear</button>
+              </div>
+              <div class="badge" style="background: var(--primary-color); color: white; font-size: 0.9em;">
+                <span id="filteredCount">0</span> activities
+              </div>
             </div>
           </div>
           <div class="table-container">
             <table id="myActivitiesTable">
               <thead>
                 <tr>
+                  <th style="width: 40px;"><input type="checkbox" id="selectAll" title="Select all"></th>
                   <th>Activity Name</th>
                   <th>Department</th>
+                  <th>Owner</th>
                   <th>GXP</th>
                   <th>Priority</th>
                   <th>Risk</th>
-                  <th>Date</th>
+                  <th>Target Date</th>
                   <th>Sprint</th>
                   <th>Status</th>
+                  <th>Progress</th>
                   <th>Backup</th>
                   <th>Actions</th>
                 </tr>
@@ -186,23 +273,60 @@
       <section id="allactivitiesSection" class="content-section d-none">
         <div class="header">
           <h1>All Activities</h1>
+          <div class="header-actions">
+            <div style="position: relative; margin-right: 10px;">
+              <input type="text" id="globalSearchAll" placeholder="🔍 Search shared activities..." 
+                     style="padding: 10px 15px; border: 2px solid #ddd; border-radius: 8px; width: 300px; font-size: 14px;" />
+              <div id="searchResultsAll" style="position: absolute; top: 100%; left: 0; right: 0; background: white; border: 2px solid #ddd; border-top: none; border-radius: 0 0 8px 8px; max-height: 400px; overflow-y: auto; display: none; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>
+            </div>
+            <button class="btn btn-primary" id="addSharedActivityBtn">
+              <span>➕</span>
+              <span>Add Shared Activity</span>
+            </button>
+          </div>
         </div>
 
-        <div class="card">
-          <div class="card-header">
-            <h2 class="card-title">Sprint Progress</h2>
+        <!-- Advanced Charts Row -->
+        <div class="charts-grid">
+          <div class="card chart-card">
+            <div class="card-header">
+              <h3 class="card-title">📊 Status Distribution</h3>
+            </div>
+            <canvas id="allStatusChart"></canvas>
           </div>
-          <div id="sprintProgress"></div>
+
+          <div class="card chart-card">
+            <div class="card-header">
+              <h3 class="card-title">🎯 Priority Breakdown</h3>
+            </div>
+            <canvas id="allPriorityChart"></canvas>
+          </div>
+        </div>
+
+        <div class="charts-grid">
+          <div class="card chart-card">
+            <div class="card-header">
+              <h3 class="card-title">📅 Sprint Progress</h3>
+            </div>
+            <canvas id="allSprintChart"></canvas>
+          </div>
+
+          <div class="card chart-card">
+            <div class="card-header">
+              <h3 class="card-title">⚡ Monthly Activity Trend</h3>
+            </div>
+            <canvas id="allTrendChart"></canvas>
+          </div>
         </div>
 
         <div class="card">
           <div class="filters">
             <div class="filter-group">
-              <label>Start Date</label>
+              <label>Start Target Date</label>
               <input type="date" id="allFilterStartDate" class="form-control">
             </div>
             <div class="filter-group">
-              <label>End Date</label>
+              <label>End Target Date</label>
               <input type="date" id="allFilterEndDate" class="form-control">
             </div>
             <div class="filter-group">
@@ -235,10 +359,11 @@
               <thead>
                 <tr>
                   <th>Activity Name</th>
+                  <th>Owner</th>
                   <th>GXP</th>
                   <th>Priority</th>
                   <th>Risk</th>
-                  <th>Date</th>
+                  <th>Target Date</th>
                   <th>Sprint</th>
                   <th>Status</th>
                   <th>Created By</th>
@@ -246,6 +371,112 @@
               </thead>
               <tbody></tbody>
             </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Calendar View Section -->
+      <section id="calendarSection" class="content-section d-none">
+        <div class="header">
+          <h1>📅 Calendar View</h1>
+          <div class="header-actions">
+            <button class="btn" id="prevMonth" style="background: #6c757d; color: white;">◀ Previous</button>
+            <span id="currentMonthYear" style="font-size: 1.2em; font-weight: bold; margin: 0 20px;"></span>
+            <button class="btn" id="nextMonth" style="background: #6c757d; color: white;">Next ▶</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div id="calendar" style="padding: 20px;">
+            <div id="calendarGrid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px;">
+              <!-- Calendar will be generated here -->
+            </div>
+          </div>
+        </div>
+
+        <div class="card" id="dayActivitiesCard" style="display: none;">
+          <div class="card-header">
+            <h3 class="card-title" id="selectedDayTitle">Activities</h3>
+          </div>
+          <div id="dayActivitiesList" style="padding: 20px;">
+            <!-- Day's activities will be shown here -->
+          </div>
+        </div>
+      </section>
+
+      <!-- Performance Analytics Section -->
+      <section id="analyticsSection" class="content-section d-none">
+        <div class="header">
+          <h1>📊 Performance Analytics Dashboard</h1>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <div class="stat-value" id="analyticsCompletionRate">0%</div>
+            <div class="stat-label">Overall Completion Rate</div>
+          </div>
+          <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+            <div class="stat-value" id="analyticsVelocity">0</div>
+            <div class="stat-label">Activities per Sprint</div>
+          </div>
+          <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+            <div class="stat-value" id="analyticsAvgDuration">0</div>
+            <div class="stat-label">Avg Days to Complete</div>
+          </div>
+          <div class="stat-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+            <div class="stat-value" id="analyticsOnTime">0%</div>
+            <div class="stat-label">On-Time Delivery</div>
+          </div>
+        </div>
+
+        <div class="charts-grid">
+          <div class="card chart-card">
+            <div class="card-header">
+              <h3 class="card-title">📈 Team Velocity Trend</h3>
+            </div>
+            <canvas id="velocityChart"></canvas>
+          </div>
+
+          <div class="card chart-card">
+            <div class="card-header">
+              <h3 class="card-title">🔥 Burndown Chart</h3>
+            </div>
+            <canvas id="burndownChart"></canvas>
+          </div>
+        </div>
+
+        <div class="charts-grid">
+          <div class="card chart-card">
+            <div class="card-header">
+              <h3 class="card-title">👥 Department Performance</h3>
+            </div>
+            <canvas id="departmentChart"></canvas>
+          </div>
+
+          <div class="card chart-card">
+            <div class="card-header">
+              <h3 class="card-title">⏱️ Cycle Time Distribution</h3>
+            </div>
+            <canvas id="cycleTimeChart"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- Templates Library Section -->
+      <section id="templatesSection" class="content-section d-none">
+        <div class="header">
+          <h1>📋 Activity Templates Library</h1>
+          <div class="header-actions">
+            <button class="btn btn-primary" id="createTemplateBtn">
+              <span>➕</span>
+              <span>Create New Template</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div id="templatesGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+            <!-- Templates will be loaded here -->
           </div>
         </div>
       </section>
@@ -387,10 +618,23 @@
 
         <div class="form-row">
           <div class="form-group">
-            <label>Activity Date *</label>
+            <label>Target Date (Due Date) *</label>
             <input type="date" id="activityDate" required>
+            <small style="color: var(--text-secondary); margin-top: 5px; display: block;">
+              The date by which this activity should be completed
+            </small>
           </div>
 
+          <div class="form-group">
+            <label>Owner Name *</label>
+            <input type="text" id="activityOwnerName" required>
+            <small style="color: var(--text-secondary); margin-top: 5px; display: block;">
+              Person responsible for this activity
+            </small>
+          </div>
+        </div>
+
+        <div class="form-row">
           <div class="form-group">
             <label>Status *</label>
             <select id="activityStatus" required>
@@ -400,6 +644,27 @@
               <option value="Cancelled">Cancelled</option>
               <option value="On Hold">On Hold</option>
             </select>
+          </div>
+          
+          <div class="form-group">
+            <label>Progress (%)</label>
+            <input type="number" id="activityProgress" min="0" max="100" value="0">
+            <small style="color: var(--text-secondary); margin-top: 5px; display: block;">
+              Completion percentage (0-100%)
+            </small>
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label>Visibility</label>
+            <select id="activityVisibility">
+              <option value="0">Personal (Only You)</option>
+              <option value="1">Shared (Everyone)</option>
+            </select>
+            <small style="color: var(--text-secondary); margin-top: 5px; display: block;">
+              Personal activities are only visible to you
+            </small>
           </div>
         </div>
 
@@ -429,11 +694,135 @@
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" id="cancelActivityBtn">Cancel</button>
           <button type="submit" class="btn btn-primary">Save Activity</button>
+          <button type="button" class="btn" id="viewCommentsBtn" style="background: #17a2b8; color: white;">💬 Comments</button>
+          <button type="button" class="btn" id="viewAttachmentsBtn" style="background: #6c757d; color: white;">📎 Attachments</button>
+          <button type="button" class="btn" id="viewDependenciesBtn" style="background: #fd7e14; color: white;">🔗 Dependencies</button>
         </div>
       </form>
     </div>
   </div>
 
-  <script src="dashboard.js"></script>
-</body>
-</html>
+  <!-- Attachments Modal -->
+  <div class="modal" id="attachmentsModal">
+    <div class="modal-content" style="max-width: 700px;">
+      <div class="modal-header">
+        <h2 class="modal-title" id="attachmentsModalTitle">📎 Activity Attachments</h2>
+        <button class="close-btn" id="closeAttachmentsModal">&times;</button>
+      </div>
+      
+      <div style="padding: 20px;">
+        <!-- Upload Form -->
+        <div style="margin-bottom: 20px; padding: 15px; border: 2px dashed #ddd; border-radius: 8px;">
+          <input type="file" id="fileInput" style="margin-bottom: 10px;">
+          <button class="btn btn-primary" id="uploadFileBtn">📤 Upload File</button>
+          <p style="color: #999; font-size: 0.85em; margin-top: 10px;">Max file size: 10MB</p>
+        </div>
+        
+        <!-- Attachments List -->
+        <div id="attachmentsList">
+          <!-- Attachments will be loaded here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Comments Modal -->
+  <div class="modal" id="commentsModal">
+    <div class="modal-content" style="max-width: 700px;">
+      <div class="modal-header">
+        <h2 class="modal-title" id="commentsModalTitle">💬 Activity Comments</h2>
+        <button class="close-btn" id="closeCommentsModal">&times;</button>
+      </div>
+      
+      <div style="padding: 20px;">
+        <!-- Add Comment Form -->
+        <div style="margin-bottom: 20px;">
+          <textarea id="newCommentText" placeholder="Write a comment..." style="width: 100%; min-height: 80px; padding: 10px; border: 2px solid #ddd; border-radius: 5px; font-family: inherit; resize: vertical;"></textarea>
+          <button class="btn btn-primary" id="addCommentBtn" style="margin-top: 10px;">Post Comment</button>
+        </div>
+        
+        <!-- Comments List -->
+        <div id="commentsList" style="max-height: 400px; overflow-y: auto;">
+          <!-- Comments will be loaded here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Activity History Modal -->
+  <div class="modal" id="historyModal">
+    <div class="modal-content" style="max-width: 800px;">
+      <div class="modal-header">
+        <h2 class="modal-title" id="historyModalTitle">Activity History</h2>
+        <button class="close-btn" id="closeHistoryModal">&times;</button>
+      </div>
+      <div id="historyContent" style="max-height: 500px; overflow-y: auto;">
+        <!-- History will be loaded here -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="closeHistoryBtn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notifications Modal -->
+  <div class="modal" id="notificationsModal">
+    <div class="modal-content" style="max-width: 600px;">
+      <div class="modal-header">
+        <h2 class="modal-title">🔔 Notifications</h2>
+        <button class="close-btn" id="closeNotificationsModal">&times;</button>
+      </div>
+      <div style="padding: 20px;">
+        <div style="margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+          <button class="btn btn-sm" id="markAllReadBtn" style="background: #28a745; color: white;">Mark All as Read</button>
+          <button class="btn btn-sm" id="clearAllNotificationsBtn" style="background: #dc3545; color: white;">Clear All</button>
+        </div>
+        <div id="notificationsList" style="max-height: 400px; overflow-y: auto;">
+          <!-- Notifications will be loaded here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Activity Templates Modal -->
+  <div class="modal" id="templatesModal">
+    <div class="modal-content" style="max-width: 800px;">
+      <div class="modal-header">
+        <h2 class="modal-title">📋 Activity Templates</h2>
+        <button class="close-btn" id="closeTemplatesModal">&times;</button>
+      </div>
+      <div style="padding: 20px;">
+        <div style="margin-bottom: 15px;">
+          <button class="btn btn-primary" id="saveAsTemplateBtn">💾 Save Current as Template</button>
+        </div>
+        <div id="templatesList" style="max-height: 400px; overflow-y: auto;">
+          <!-- Templates will be loaded here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dependencies Modal -->
+  <div class="modal" id="dependenciesModal">
+    <div class="modal-content" style="max-width: 700px;">
+      <div class="modal-header">
+        <h2 class="modal-title">🔗 Activity Dependencies</h2>
+        <button class="close-btn" id="closeDependenciesModal">&times;</button>
+      </div>
+      <div style="padding: 20px;">
+        <div style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 10px; font-weight: bold;">Add Dependency</label>
+          <select id="dependencyActivitySelect" class="form-control" style="margin-bottom: 10px;">
+            <option value="">Select activity that blocks this one...</option>
+          </select>
+          <button class="btn btn-primary" id="addDependencyBtn">Add Dependency</button>
+        </div>
+        
+        <h3 style="margin-bottom: 15px; font-size: 1.1em;">Current Dependencies:</h3>
+        <div id="dependenciesList">
+          <!-- Dependencies will be loaded here -->
+        </div>
+      </div>
+    </div>
+  </div>
+

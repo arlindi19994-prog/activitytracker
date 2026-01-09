@@ -13,6 +13,61 @@
   --hover-bg: #f8f9fa;
   --critical-red: #dc3545;
   --critical-red-light: #f8d7da;
+  --sidebar-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --main-bg: #f4f6f9;
+  --table-header-bg: #f8f9fa;
+  --shadow: rgba(0, 0, 0, 0.1);
+}
+
+/* Dark mode theme */
+[data-theme="dark"] {
+  --card-bg: #2d3748;
+  --text-primary: #e2e8f0;
+  --text-secondary: #a0aec0;
+  --border-color: #4a5568;
+  --hover-bg: #374151;
+  --main-bg: #1a202c;
+  --table-header-bg: #2d3748;
+  --shadow: rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] body {
+  background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .card {
+  background: var(--card-bg);
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .modal-content {
+  background: var(--card-bg);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+  background: #374151;
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] table {
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] table thead {
+  background: var(--table-header-bg);
+}
+
+[data-theme="dark"] table tbody tr {
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] table tbody tr:hover {
+  background: var(--hover-bg);
 }
 
 * {
@@ -1414,6 +1469,116 @@ tbody tr.row-critical-all td {
   
   .form-row {
     grid-template-columns: 1fr;
+  }
+  
+  /* Make header actions stack on mobile */
+  .header-actions {
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 10px;
+  }
+  
+  .header-actions > * {
+    width: 100% !important;
+  }
+  
+  .header-actions input[type="text"] {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  
+  /* Improve button spacing on mobile */
+  .btn {
+    padding: 12px 20px;
+    font-size: 14px;
+  }
+  
+  .btn-sm {
+    padding: 8px 12px;
+    font-size: 12px;
+    margin: 2px !important;
+  }
+  
+  /* Stack filter groups vertically */
+  .filters {
+    grid-template-columns: 1fr !important;
+  }
+  
+  /* Improve modal on mobile */
+  .modal-content {
+    width: 95%;
+    max-width: 95%;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  
+  /* Better table display */
+  table {
+    font-size: 13px;
+  }
+  
+  table th,
+  table td {
+    padding: 10px 8px;
+  }
+  
+  /* Stats grid improvements */
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  
+  .stat-card {
+    padding: 15px;
+  }
+  
+  .stat-value {
+    font-size: 1.8em;
+  }
+  
+  /* Card improvements */
+  .card {
+    padding: 15px;
+    margin-bottom: 15px;
+  }
+  
+  .card-header {
+    padding: 12px 0;
+  }
+  
+  /* Sidebar improvements */
+  .sidebar {
+    width: 280px;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Extra small screens */
+  .header h1 {
+    font-size: 1.5em;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .badge {
+    font-size: 0.7em;
+    padding: 3px 6px;
+  }
+  
+  /* Touch-friendly buttons */
+  .btn {
+    min-height: 44px;
+  }
+  
+  table {
+    font-size: 12px;
+  }
+  
+  table th,
+  table td {
+    padding: 8px 5px;
   }
 }
 

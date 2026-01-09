@@ -70,6 +70,7 @@ function setupNavigation() {
       if (sectionName === 'dashboard') loadDashboard();
       if (sectionName === 'activities') loadActivities();
       if (sectionName === 'users') loadUsers();
+      if (sectionName === 'audit') loadAuditHistory();
       if (sectionName === 'profile') loadProfile();
       
       // Close mobile menu
@@ -510,6 +511,39 @@ async function deleteUser(id) {
   }
 }
 
+// ============= AUDIT HISTORY =============
+
+async function loadAuditHistory() {
+  try {
+    const response = await apiCall('/activities/audit/all-history');
+    const history = await response.json();
+    
+    const tbody = document.querySelector('#auditHistoryTable tbody');
+    
+    if (history.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 40px;">No audit history available</td></tr>';
+      return;
+    }
+    
+    tbody.innerHTML = history.map(h => `
+      <tr>
+        <td>${formatDateTime(h.edited_at)}</td>
+        <td><strong>${h.activity_name || 'Unknown Activity'}</strong></td>
+        <td><span class="badge badge-low">👤 ${h.edited_by_name || 'Unknown'}</span></td>
+        <td>${h.change_description || h.new_value || 'Modified'}</td>
+      </tr>
+    `).join('');
+  } catch (error) {
+    console.error('Error loading audit history:', error);
+    const tbody = document.querySelector('#auditHistoryTable tbody');
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 40px; color: var(--danger-color);">Failed to load audit history</td></tr>';
+  }
+}
+
+document.getElementById('refreshAuditBtn').addEventListener('click', () => {
+  loadAuditHistory();
+});
+
 // ============= PROFILE =============
 
 async function loadProfile() {
@@ -589,6 +623,18 @@ function formatDate(dateString) {
   if (!dateString) return '-';
   const date = new Date(dateString);
   return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+function formatDateTime(dateString) {
+  if (!dateString) return '-';
+  const date = new Date(dateString);
+  return date.toLocaleString('en-US', { 
+    year: 'numeric', 
+    month: 'short', 
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
 }
 
 function getGxpBadge(value) {
