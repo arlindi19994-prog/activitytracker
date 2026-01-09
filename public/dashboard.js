@@ -25,9 +25,6 @@ function checkAuth() {
   }
   
   document.getElementById('currentUser').textContent = currentUser.username;
-  
-  // Load and display profile picture
-  loadProfilePicture();
 }
 
 // API helper
@@ -2022,6 +2019,8 @@ checkAuth();
 setupNavigation();
 initTheme();
 loadMyActivities();
+loadProfilePicture(); // Load profile picture after DOM is ready
+setupProfilePictureHandlers(); // Setup event handlers after DOM is ready
 
 // ============= NOTIFICATIONS SYSTEM =============
 
@@ -2629,112 +2628,132 @@ async function loadProfilePicture() {
       // Show profile picture in header
       const headerImg = document.getElementById('headerProfilePicture');
       const headerPlaceholder = document.getElementById('headerProfilePlaceholder');
-      headerImg.src = user.profile_picture;
-      headerImg.style.display = 'inline-block';
-      headerPlaceholder.style.display = 'none';
+      if (headerImg && headerPlaceholder) {
+        headerImg.src = user.profile_picture;
+        headerImg.style.display = 'inline-block';
+        headerPlaceholder.style.display = 'none';
+      }
       
       // Show profile picture in settings
       const settingsImg = document.getElementById('profilePicturePreview');
       const settingsPlaceholder = document.getElementById('profilePicturePlaceholder');
-      settingsImg.src = user.profile_picture;
-      settingsImg.style.display = 'inline-block';
-      settingsPlaceholder.style.display = 'none';
+      if (settingsImg && settingsPlaceholder) {
+        settingsImg.src = user.profile_picture;
+        settingsImg.style.display = 'inline-block';
+        settingsPlaceholder.style.display = 'none';
+      }
       
       // Show delete button
-      document.getElementById('deleteProfilePictureBtn').style.display = 'inline-block';
+      const deleteBtn = document.getElementById('deleteProfilePictureBtn');
+      if (deleteBtn) {
+        deleteBtn.style.display = 'inline-block';
+      }
     }
   } catch (error) {
     console.error('Error loading profile picture:', error);
   }
 }
 
-// Profile picture upload form handler
-document.getElementById('profilePictureForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  
-  const fileInput = document.getElementById('profilePictureInput');
-  const messageDiv = document.getElementById('profilePictureMessage');
-  
-  if (!fileInput.files || !fileInput.files[0]) {
-    messageDiv.innerHTML = '<div class="error-message">Please select a file</div>';
-    return;
-  }
-  
-  const file = fileInput.files[0];
-  
-  // Check file size (5MB limit)
-  if (file.size > 5 * 1024 * 1024) {
-    messageDiv.innerHTML = '<div class="error-message">File size must be less than 5MB</div>';
-    return;
-  }
-  
-  // Check file type
-  if (!file.type.startsWith('image/')) {
-    messageDiv.innerHTML = '<div class="error-message">Please select an image file</div>';
-    return;
-  }
-  
-  try {
-    const formData = new FormData();
-    formData.append('profilePicture', file);
-    
-    const response = await fetch(`${API_URL}/user/profile-picture`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      },
-      body: formData
+function setupProfilePictureHandlers() {
+  // Profile picture upload form handler
+  const form = document.getElementById('profilePictureForm');
+  if (form) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const fileInput = document.getElementById('profilePictureInput');
+      const messageDiv = document.getElementById('profilePictureMessage');
+      
+      if (!fileInput.files || !fileInput.files[0]) {
+        messageDiv.innerHTML = '<div class="error-message">Please select a file</div>';
+        return;
+      }
+      
+      const file = fileInput.files[0];
+      
+      // Check file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        messageDiv.innerHTML = '<div class="error-message">File size must be less than 5MB</div>';
+        return;
+      }
+      
+      // Check file type
+      if (!file.type.startsWith('image/')) {
+        messageDiv.innerHTML = '<div class="error-message">Please select an image file</div>';
+        return;
+      }
+      
+      try {
+        const formData = new FormData();
+        formData.append('profilePicture', file);
+        
+        const response = await fetch(`${API_URL}/user/profile-picture`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: formData
+        });
+        
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Upload failed');
+        }
+        
+        const data = await response.json();
+        messageDiv.innerHTML = '<div class="success-message">Profile picture updated successfully!</div>';
+        
+        // Reload profile picture
+        await loadProfilePicture();
+        
+        // Clear file input
+        fileInput.value = '';
+        
+        setTimeout(() => {
+          messageDiv.innerHTML = '';
+        }, 3000);
+      } catch (error) {
+        console.error('Error uploading profile picture:', error);
+        messageDiv.innerHTML = `<div class="error-message">${error.message}</div>`;
+      }
     });
-    
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Upload failed');
-    }
-    
-    const data = await response.json();
-    messageDiv.innerHTML = '<div class="success-message">Profile picture updated successfully!</div>';
-    
-    // Reload profile picture
-    await loadProfilePicture();
-    
-    // Clear file input
-    fileInput.value = '';
-    
-    setTimeout(() => {
-      messageDiv.innerHTML = '';
-    }, 3000);
-  } catch (error) {
-    console.error('Error uploading profile picture:', error);
-    messageDiv.innerHTML = `<div class="error-message">${error.message}</div>`;
   }
-});
 
-// Delete profile picture button handler
-document.getElementById('deleteProfilePictureBtn').addEventListener('click', async () => {
-  if (!confirm('Are you sure you want to remove your profile picture?')) {
-    return;
+  // Delete profile picture button handler
+  const deleteBtn = document.getElementById('deleteProfilePictureBtn');
+  if (deleteBtn) {
+    deleteBtn.addEventListener('click', async () => {
+      if (!confirm('Are you sure you want to remove your profile picture?')) {
+        return;
+      }
+      
+      const messageDiv = document.getElementById('profilePictureMessage');
+      
+      try {
+        const response = await apiCall('/user/profile-picture', { method: 'DELETE' });
+        const data = await response.json();
+        
+        messageDiv.innerHTML = '<div class="success-message">Profile picture removed successfully!</div>';
+        
+        // Hide profile pictures and show placeholders
+        const headerImg = document.getElementById('headerProfilePicture');
+        const headerPlaceholder = document.getElementById('headerProfilePlaceholder');
+        const settingsImg = document.getElementById('profilePicturePreview');
+        const settingsPlaceholder = document.getElementById('profilePicturePlaceholder');
+        
+        if (headerImg) headerImg.style.display = 'none';
+        if (headerPlaceholder) headerPlaceholder.style.display = 'inline-flex';
+        if (settingsImg) settingsImg.style.display = 'none';
+        if (settingsPlaceholder) settingsPlaceholder.style.display = 'inline-flex';
+        deleteBtn.style.display = 'none';
+        
+        setTimeout(() => {
+          messageDiv.innerHTML = '';
+        }, 3000);
+      } catch (error) {
+        console.error('Error deleting profile picture:', error);
+        messageDiv.innerHTML = '<div class="error-message">Failed to delete profile picture</div>';
+      }
+    });
   }
-  
-  const messageDiv = document.getElementById('profilePictureMessage');
-  
-  try {
-    const response = await apiCall('/user/profile-picture', { method: 'DELETE' });
-    const data = await response.json();
-    
-    messageDiv.innerHTML = '<div class="success-message">Profile picture removed successfully!</div>';
-    
-    // Hide profile pictures and show placeholders
-    document.getElementById('headerProfilePicture').style.display = 'none';
-    document.getElementById('headerProfilePlaceholder').style.display = 'inline-flex';
-    document.getElementById('profilePicturePreview').style.display = 'none';
-    document.getElementById('profilePicturePlaceholder').style.display = 'inline-flex';
-    document.getElementById('deleteProfilePictureBtn').style.display = 'none';
-    
-    setTimeout(() => {
-      messageDiv.innerHTML = '';
-    }, 3000);
-  } catch (error) {
-    console.error('Error deleting profile picture:', error);
-    messageDiv.innerHTML = '<div class="error-message">Failed to delete profile picture</div>';
-  }
-});
+}
