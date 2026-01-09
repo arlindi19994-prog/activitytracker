@@ -136,12 +136,6 @@ function switchSection(sectionName) {
   if (sectionName === 'allactivities') loadAllActivities();
 }
 
-// Logout
-document.getElementById('logoutBtn').addEventListener('click', () => {
-  localStorage.clear();
-  window.location.href = 'index.html';
-});
-
 // ============= CHARTS =============
 
 function createStatusChart(activities) {
@@ -549,14 +543,6 @@ async function quickStatusChange(id, newStatus) {
 }
 
 // Filters for my activities
-document.getElementById('myFilterStartDate').addEventListener('change', applyMyFilters);
-document.getElementById('myFilterEndDate').addEventListener('change', applyMyFilters);
-document.getElementById('myFilterSprint').addEventListener('change', applyMyFilters);
-document.getElementById('myFilterStatus').addEventListener('change', applyMyFilters);
-document.getElementById('myFilterDepartment').addEventListener('change', applyMyFilters);
-document.getElementById('myFilterPriority').addEventListener('change', applyMyFilters);
-document.getElementById('myFilterRisk').addEventListener('change', applyMyFilters);
-
 function applyMyFilters() {
   const startDate = document.getElementById('myFilterStartDate').value;
   const endDate = document.getElementById('myFilterEndDate').value;
@@ -865,11 +851,6 @@ function displayAllActivities(activitiesToDisplay) {
 }
 
 // Filters for all activities
-document.getElementById('allFilterStartDate').addEventListener('change', applyAllFilters);
-document.getElementById('allFilterEndDate').addEventListener('change', applyAllFilters);
-document.getElementById('allFilterSprint').addEventListener('change', applyAllFilters);
-document.getElementById('allFilterStatus').addEventListener('change', applyAllFilters);
-
 function applyAllFilters() {
   const startDate = document.getElementById('allFilterStartDate').value;
   const endDate = document.getElementById('allFilterEndDate').value;
@@ -1406,31 +1387,13 @@ function updateThemeButton(theme) {
   }
 }
 
-document.getElementById('themeToggle').addEventListener('click', () => {
-  const currentTheme = document.documentElement.getAttribute('data-theme');
-  const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-  document.documentElement.setAttribute('data-theme', newTheme);
-  localStorage.setItem('theme', newTheme);
-  updateThemeButton(newTheme);
-});
+// Dark mode event listener now in setupEventListeners()
 
 // ============= BULK OPERATIONS =============
 
 let selectedActivities = new Set();
 
-// Select all checkbox
-document.getElementById('selectAll').addEventListener('change', (e) => {
-  const checkboxes = document.querySelectorAll('.activity-checkbox');
-  checkboxes.forEach(cb => {
-    cb.checked = e.target.checked;
-    if (e.target.checked) {
-      selectedActivities.add(parseInt(cb.dataset.id));
-    } else {
-      selectedActivities.delete(parseInt(cb.dataset.id));
-    }
-  });
-  updateBulkActionsBar();
-});
+// Select all checkbox event listener now in setupEventListeners()
 
 // Individual checkbox changes
 document.addEventListener('change', (e) => {
@@ -1459,16 +1422,10 @@ function updateBulkActionsBar() {
   }
 }
 
-// Clear selection
-document.getElementById('clearSelection').addEventListener('click', () => {
-  selectedActivities.clear();
-  document.querySelectorAll('.activity-checkbox').forEach(cb => cb.checked = false);
-  document.getElementById('selectAll').checked = false;
-  updateBulkActionsBar();
-});
+// Clear selection and bulk status event listeners now in setupEventListeners()
 
-// Apply bulk status change
-document.getElementById('applyBulkStatus').addEventListener('click', async () => {
+// Apply bulk status function
+async function applyBulkStatusChange() {
   const newStatus = document.getElementById('bulkStatusChange').value;
   if (!newStatus) {
     alert('Please select a status');
@@ -2015,12 +1972,478 @@ async function deleteAttachment(attachmentId) {
 
 // ============= INITIALIZATION =============
 
-checkAuth();
-setupNavigation();
-initTheme();
-loadMyActivities();
-loadProfilePicture(); // Load profile picture after DOM is ready
-setupProfilePictureHandlers(); // Setup event handlers after DOM is ready
+// Main initialization function - called when DOM is ready
+function initializeApp() {
+  checkAuth();
+  setupNavigation();
+  initTheme();
+  loadMyActivities();
+  loadProfilePicture();
+  setupProfilePictureHandlers();
+  setupEventListeners();
+  
+  // Start notification polling
+  loadNotifications();
+  setInterval(loadNotifications, 30000);
+}
+
+// Setup all event listeners after DOM is ready
+function setupEventListeners() {
+  // Logout
+  const logoutBtn = document.getElementById('logoutBtn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', () => {
+      localStorage.clear();
+      window.location.href = 'index.html';
+    });
+  }
+  
+  // Theme toggle
+  const themeToggle = document.getElementById('themeToggle');
+  if (themeToggle) {
+    themeToggle.addEventListener('click', () => {
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+      updateThemeButton(newTheme);
+    });
+  }
+  
+  // My Activities filters
+  const myFilterStartDate = document.getElementById('myFilterStartDate');
+  const myFilterEndDate = document.getElementById('myFilterEndDate');
+  const myFilterSprint = document.getElementById('myFilterSprint');
+  const myFilterStatus = document.getElementById('myFilterStatus');
+  const myFilterDepartment = document.getElementById('myFilterDepartment');
+  const myFilterPriority = document.getElementById('myFilterPriority');
+  const myFilterRisk = document.getElementById('myFilterRisk');
+  
+  if (myFilterStartDate) myFilterStartDate.addEventListener('change', applyMyFilters);
+  if (myFilterEndDate) myFilterEndDate.addEventListener('change', applyMyFilters);
+  if (myFilterSprint) myFilterSprint.addEventListener('change', applyMyFilters);
+  if (myFilterStatus) myFilterStatus.addEventListener('change', applyMyFilters);
+  if (myFilterDepartment) myFilterDepartment.addEventListener('change', applyMyFilters);
+  if (myFilterPriority) myFilterPriority.addEventListener('change', applyMyFilters);
+  if (myFilterRisk) myFilterRisk.addEventListener('change', applyMyFilters);
+  
+  // All Activities filters
+  const allFilterStartDate = document.getElementById('allFilterStartDate');
+  const allFilterEndDate = document.getElementById('allFilterEndDate');
+  const allFilterSprint = document.getElementById('allFilterSprint');
+  const allFilterStatus = document.getElementById('allFilterStatus');
+  
+  if (allFilterStartDate) allFilterStartDate.addEventListener('change', applyAllFilters);
+  if (allFilterEndDate) allFilterEndDate.addEventListener('change', applyAllFilters);
+  if (allFilterSprint) allFilterSprint.addEventListener('change', applyAllFilters);
+  if (allFilterStatus) allFilterStatus.addEventListener('change', applyAllFilters);
+  
+  // Activity modal buttons
+  const addActivityBtn = document.getElementById('addActivityBtn');
+  const addSharedActivityBtn = document.getElementById('addSharedActivityBtn');
+  const closeActivityModal = document.getElementById('closeActivityModal');
+  const cancelActivityBtn = document.getElementById('cancelActivityBtn');
+  const activityForm = document.getElementById('activityForm');
+  
+  if (addActivityBtn) {
+    addActivityBtn.addEventListener('click', () => {
+      document.getElementById('activityModalTitle').textContent = 'Add Activity';
+      document.getElementById('activityId').value = '';
+      document.getElementById('activityForm').reset();
+      document.getElementById('activityModal').classList.add('active');
+    });
+  }
+  
+  if (addSharedActivityBtn) {
+    addSharedActivityBtn.addEventListener('click', () => {
+      document.getElementById('activityModalTitle').textContent = 'Add Shared Activity';
+      document.getElementById('activityId').value = '';
+      document.getElementById('activityForm').reset();
+      document.getElementById('activityModal').classList.add('active');
+    });
+  }
+  
+  if (closeActivityModal) {
+    closeActivityModal.addEventListener('click', () => {
+      document.getElementById('activityModal').classList.remove('active');
+    });
+  }
+  
+  if (cancelActivityBtn) {
+    cancelActivityBtn.addEventListener('click', () => {
+      document.getElementById('activityModal').classList.remove('active');
+    });
+  }
+  
+  if (activityForm) {
+    // Activity form submit handler is defined inline below - skip duplicate
+  }
+  
+  // History modal
+  const closeHistoryModal = document.getElementById('closeHistoryModal');
+  const closeHistoryBtn = document.getElementById('closeHistoryBtn');
+  const exportPdfBtn = document.getElementById('exportPdfBtn');
+  const exportCsvBtn = document.getElementById('exportCsvBtn');
+  
+  if (closeHistoryModal) {
+    closeHistoryModal.addEventListener('click', () => {
+      document.getElementById('historyModal').classList.remove('active');
+    });
+  }
+  
+  if (closeHistoryBtn) {
+    closeHistoryBtn.addEventListener('click', () => {
+      document.getElementById('historyModal').classList.remove('active');
+    });
+  }
+  
+  if (exportPdfBtn) {
+    exportPdfBtn.addEventListener('click', async () => {
+      alert('PDF export feature coming soon!');
+    });
+  }
+  
+  if (exportCsvBtn) {
+    exportCsvBtn.addEventListener('click', () => {
+      exportToCSV();
+    });
+  }
+  
+  // Password and notification forms
+  const changePasswordForm = document.getElementById('changePasswordForm');
+  const notificationForm = document.getElementById('notificationForm');
+  
+  // These forms have inline handlers defined below - skip duplicates
+  
+  // Search
+  const globalSearch = document.getElementById('globalSearch');
+  const globalSearchAll = document.getElementById('globalSearchAll');
+  
+  if (globalSearch) {
+    globalSearch.addEventListener('input', (e) => {
+      const query = e.target.value.toLowerCase();
+      filterActivities(myActivities, 'myActivitiesTable', query);
+    });
+  }
+  
+  if (globalSearchAll) {
+    globalSearchAll.addEventListener('input', (e) => {
+      const query = e.target.value.toLowerCase();
+      filterActivities(allActivities, 'allActivitiesTable', query);
+    });
+  }
+  
+  // Bulk operations
+  const selectAll = document.getElementById('selectAll');
+  const clearSelection = document.getElementById('clearSelection');
+  const applyBulkStatus = document.getElementById('applyBulkStatus');
+  
+  if (selectAll) {
+    selectAll.addEventListener('change', (e) => {
+      const checkboxes = document.querySelectorAll('.activity-checkbox');
+      checkboxes.forEach(checkbox => {
+        checkbox.checked = e.target.checked;
+        const activityId = parseInt(checkbox.dataset.activityId);
+        if (e.target.checked) {
+          selectedActivities.add(activityId);
+        } else {
+          selectedActivities.delete(activityId);
+        }
+      });
+      updateBulkBar();
+    });
+  }
+  
+  if (clearSelection) {
+    clearSelection.addEventListener('click', () => {
+      selectedActivities.clear();
+      document.querySelectorAll('.activity-checkbox').forEach(cb => cb.checked = false);
+      document.getElementById('selectAll').checked = false;
+      updateBulkBar();
+    });
+  }
+  
+  if (applyBulkStatus) {
+    applyBulkStatus.addEventListener('click', async () => {
+      const newStatus = document.getElementById('bulkStatus').value;
+      if (!newStatus) {
+        alert('Please select a status');
+        return;
+      }
+      
+      if (!confirm(`Change status to "${newStatus}" for ${selectedActivities.size} activities?`)) {
+        return;
+      }
+      
+      for (const activityId of selectedActivities) {
+        try {
+          await apiCall(`/activities/${activityId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ status: newStatus })
+          });
+        } catch (error) {
+          console.error(`Failed to update activity ${activityId}:`, error);
+        }
+      }
+      
+      selectedActivities.clear();
+      document.getElementById('selectAll').checked = false;
+      updateBulkBar();
+      loadMyActivities();
+      alert('Activities updated successfully!');
+    });
+  }
+  
+  // Archive toggle
+  const toggleArchived = document.getElementById('toggleArchived');
+  if (toggleArchived) {
+    toggleArchived.addEventListener('click', () => {
+      showArchived = !showArchived;
+      toggleArchived.innerHTML = showArchived 
+        ? '<span class="icon">👁️</span> <span>Hide Archived</span>' 
+        : '<span class="icon">📦</span> <span>Show Archived</span>';
+      loadMyActivities();
+    });
+  }
+  
+  // Calendar navigation
+  const prevMonth = document.getElementById('prevMonth');
+  const nextMonth = document.getElementById('nextMonth');
+  
+  if (prevMonth) {
+    prevMonth.addEventListener('click', () => {
+      currentMonth--;
+      if (currentMonth < 0) {
+        currentMonth = 11;
+        currentYear--;
+      }
+      renderCalendar();
+    });
+  }
+  
+  if (nextMonth) {
+    nextMonth.addEventListener('click', () => {
+      currentMonth++;
+      if (currentMonth > 11) {
+        currentMonth = 0;
+        currentYear++;
+      }
+      renderCalendar();
+    });
+  }
+  
+  // Comments modal
+  const viewCommentsBtn = document.getElementById('viewCommentsBtn');
+  const closeCommentsModal = document.getElementById('closeCommentsModal');
+  const addCommentBtn = document.getElementById('addCommentBtn');
+  
+  if (viewCommentsBtn) {
+    viewCommentsBtn.addEventListener('click', () => {
+      const activityId = document.getElementById('activityId').value;
+      if (activityId) {
+        loadComments(activityId);
+        document.getElementById('commentsModal').classList.add('active');
+      }
+    });
+  }
+  
+  if (closeCommentsModal) {
+    closeCommentsModal.addEventListener('click', () => {
+      document.getElementById('commentsModal').classList.remove('active');
+    });
+  }
+  
+  if (addCommentBtn) {
+    addCommentBtn.addEventListener('click', async () => {
+      const activityId = document.getElementById('activityId').value;
+      const commentText = document.getElementById('commentText').value.trim();
+      
+      if (!commentText) {
+        alert('Please enter a comment');
+        return;
+      }
+      
+      try {
+        await apiCall(`/activities/${activityId}/comments`, {
+          method: 'POST',
+          body: JSON.stringify({ comment_text: commentText })
+        });
+        
+        document.getElementById('commentText').value = '';
+        loadComments(activityId);
+      } catch (error) {
+        console.error('Error adding comment:', error);
+        alert('Failed to add comment');
+      }
+    });
+  }
+  
+  // Attachments modal
+  const viewAttachmentsBtn = document.getElementById('viewAttachmentsBtn');
+  const closeAttachmentsModal = document.getElementById('closeAttachmentsModal');
+  const uploadFileBtn = document.getElementById('uploadFileBtn');
+  
+  if (viewAttachmentsBtn) {
+    viewAttachmentsBtn.addEventListener('click', () => {
+      const activityId = document.getElementById('activityId').value;
+      if (activityId) {
+        loadAttachments(activityId);
+        document.getElementById('attachmentsModal').classList.add('active');
+      }
+    });
+  }
+  
+  if (closeAttachmentsModal) {
+    closeAttachmentsModal.addEventListener('click', () => {
+      document.getElementById('attachmentsModal').classList.remove('active');
+    });
+  }
+  
+  if (uploadFileBtn) {
+    uploadFileBtn.addEventListener('click', async () => {
+      const activityId = document.getElementById('activityId').value;
+      const fileInput = document.getElementById('attachmentFile');
+      
+      if (!fileInput.files || !fileInput.files[0]) {
+        alert('Please select a file');
+        return;
+      }
+      
+      const formData = new FormData();
+      formData.append('file', fileInput.files[0]);
+      
+      try {
+        const response = await fetch(`${API_URL}/activities/${activityId}/attachments`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` },
+          body: formData
+        });
+        
+        if (!response.ok) throw new Error('Upload failed');
+        
+        fileInput.value = '';
+        loadAttachments(activityId);
+        alert('File uploaded successfully!');
+      } catch (error) {
+        console.error('Error uploading file:', error);
+        alert('Failed to upload file');
+      }
+    });
+  }
+  
+  // Notifications modal
+  const notificationBtn = document.getElementById('notificationBtn');
+  const closeNotificationsModal = document.getElementById('closeNotificationsModal');
+  const markAllReadBtn = document.getElementById('markAllReadBtn');
+  const clearAllNotificationsBtn = document.getElementById('clearAllNotificationsBtn');
+  
+  if (notificationBtn) {
+    notificationBtn.addEventListener('click', async () => {
+      await loadNotifications();
+      document.getElementById('notificationsModal').classList.add('active');
+    });
+  }
+  
+  if (closeNotificationsModal) {
+    closeNotificationsModal.addEventListener('click', () => {
+      document.getElementById('notificationsModal').classList.remove('active');
+    });
+  }
+  
+  if (markAllReadBtn) {
+    markAllReadBtn.addEventListener('click', async () => {
+      try {
+        await apiCall('/notifications/read-all', { method: 'PUT' });
+        loadNotifications();
+      } catch (error) {
+        console.error('Error marking all as read:', error);
+      }
+    });
+  }
+  
+  if (clearAllNotificationsBtn) {
+    clearAllNotificationsBtn.addEventListener('click', async () => {
+      if (confirm('Clear all notifications?')) {
+        try {
+          await apiCall('/notifications/clear-all', { method: 'DELETE' });
+          loadNotifications();
+        } catch (error) {
+          console.error('Error clearing notifications:', error);
+        }
+      }
+    });
+  }
+  
+  // Templates
+  const createTemplateBtn = document.getElementById('createTemplateBtn');
+  if (createTemplateBtn) {
+    createTemplateBtn.addEventListener('click', () => {
+      document.getElementById('templateModalTitle').textContent = 'Create Template';
+      document.getElementById('templateForm').reset();
+      document.getElementById('templateModal').classList.add('active');
+    });
+  }
+  
+  // Dependencies modal
+  const viewDependenciesBtn = document.getElementById('viewDependenciesBtn');
+  const closeDependenciesModal = document.getElementById('closeDependenciesModal');
+  const addDependencyBtn = document.getElementById('addDependencyBtn');
+  
+  if (viewDependenciesBtn) {
+    viewDependenciesBtn.addEventListener('click', () => {
+      const activityId = document.getElementById('activityId').value;
+      if (activityId) {
+        loadDependenciesModal(activityId);
+        document.getElementById('dependenciesModal').classList.add('active');
+      }
+    });
+  }
+  
+  if (closeDependenciesModal) {
+    closeDependenciesModal.addEventListener('click', () => {
+      document.getElementById('dependenciesModal').classList.remove('active');
+    });
+  }
+  
+  if (addDependencyBtn) {
+    addDependencyBtn.addEventListener('click', async () => {
+      const activityId = currentActivityForDependencies;
+      const dependsOnId = document.getElementById('dependencySelect').value;
+      
+      if (!dependsOnId) {
+        alert('Please select an activity');
+        return;
+      }
+      
+      if (dependsOnId == activityId) {
+        alert('Activity cannot depend on itself');
+        return;
+      }
+      
+      try {
+        await apiCall(`/activities/${activityId}/dependencies`, {
+          method: 'POST',
+          body: JSON.stringify({ depends_on_activity_id: dependsOnId, dependency_type: 'blocks' })
+        });
+        
+        loadDependenciesModal(activityId);
+      } catch (error) {
+        console.error('Error adding dependency:', error);
+        alert('Failed to add dependency');
+      }
+    });
+  }
+  
+  // Keyboard shortcuts
+  document.addEventListener('keydown', handleKeyboardShortcuts);
+}
+
+// Call initialization when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeApp);
+} else {
+  initializeApp();
+}
 
 // ============= NOTIFICATIONS SYSTEM =============
 
