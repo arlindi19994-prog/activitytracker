@@ -200,6 +200,15 @@ function migrateDatabase() {
       console.log(`Added column to edit_history: change_description`);
     }
   });
+  
+  // Add profile_picture column to users table
+  db.run(`ALTER TABLE users ADD COLUMN profile_picture TEXT`, (err) => {
+    if (err && !err.message.includes('duplicate column')) {
+      console.log(`Column profile_picture migration skipped`);
+    } else if (!err) {
+      console.log(`Added column to users: profile_picture`);
+    }
+  });
 }
 
 // Helper function to calculate Sprint based on date

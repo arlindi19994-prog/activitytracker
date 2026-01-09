@@ -20,7 +20,13 @@ if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-// Configure multer for file uploads
+// Create profiles directory for profile pictures
+const profilesDir = path.join(uploadsDir, 'profiles');
+if (!fs.existsSync(profilesDir)) {
+  fs.mkdirSync(profilesDir, { recursive: true });
+}
+
+// Configure multer for file uploads (activity attachments)
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, uploadsDir);
@@ -36,9 +42,34 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
 });
 
+// Configure multer for profile pictures
+const profileStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, profilesDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, 'profile-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const profileUpload = multer({ 
+  storage: profileStorage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit for profile pictures
+  fileFilter: (req, file, cb) => {
+    // Only accept image files
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed!'), false);
+    }
+  }
+});
+
 app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static('public'));
+app.use('/uploads', express.static(uploadsDir)); // Serve uploaded files
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -90,7 +121,7 @@ app.post('/api/auth/login', (req, res) => {
 
 // Get current user info
 app.get('/api/auth/me', authenticateToken, (req, res) => {
-  db.get('SELECT id, username, email, role, notify_email FROM users WHERE id = ?', 
+  db.get('SELECT id, username, email, role, notify_email, profile_picture FROM users WHERE id = ?', 
     [req.user.id], 
     (err, user) => {
       if (err) return res.status(500).json({ error: 'Database error' });
@@ -1219,6 +1250,81 @@ cron.schedule('0 9 * * *', () => {
 cron.schedule('0 9 * * 1', () => {
   console.log('Running weekly reminder check...');
   sendWeeklyReminders();
+});
+
+// ============= PROFILE PICTURE ENDPOINTS =============
+
+// Upload profile picture
+app.post('/api/user/profile-picture', authenticateToken, profileUpload.single('profilePicture'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file uploaded' });
+  }
+
+  const profilePicturePath = `/uploads/profiles/${req.file.filename}`;
+
+  // Delete old profile picture if it exists
+  db.get('SELECT profile_picture FROM users WHERE id = ?', [req.user.id], (err, user) => {
+    if (!err && user && user.profile_picture) {
+      const oldFilePath = path.join(__dirname, 'public', user.profile_picture);
+      if (fs.existsSync(oldFilePath)) {
+        fs.unlinkSync(oldFilePath);
+      }
+    }
+
+    // Update user with new profile picture path
+    db.run('UPDATE users SET profile_picture = ? WHERE id = ?', 
+      [profilePicturePath, req.user.id],
+      function(err) {
+        if (err) {
+          // Delete uploaded file if database update fails
+          fs.unlinkSync(req.file.path);
+          return res.status(500).json({ error: 'Database error' });
+        }
+        res.json({ 
+          message: 'Profile picture uploaded successfully',
+          profilePicture: profilePicturePath
+        });
+      }
+    );
+  });
+});
+
+// Get profile picture
+app.get('/api/user/profile-picture/:userId', (req, res) => {
+  db.get('SELECT profile_picture FROM users WHERE id = ?', [req.params.userId], (err, user) => {
+    if (err) return res.status(500).json({ error: 'Database error' });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    
+    if (!user.profile_picture) {
+      return res.json({ profilePicture: null });
+    }
+
+    res.json({ profilePicture: user.profile_picture });
+  });
+});
+
+// Delete profile picture
+app.delete('/api/user/profile-picture', authenticateToken, (req, res) => {
+  db.get('SELECT profile_picture FROM users WHERE id = ?', [req.user.id], (err, user) => {
+    if (err) return res.status(500).json({ error: 'Database error' });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    if (!user.profile_picture) {
+      return res.json({ message: 'No profile picture to delete' });
+    }
+
+    // Delete the file
+    const filePath = path.join(__dirname, 'public', user.profile_picture);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+
+    // Update database
+    db.run('UPDATE users SET profile_picture = NULL WHERE id = ?', [req.user.id], function(err) {
+      if (err) return res.status(500).json({ error: 'Database error' });
+      res.json({ message: 'Profile picture deleted successfully' });
+    });
+  });
 });
 
 // ============= START SERVER =============
