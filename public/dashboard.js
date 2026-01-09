@@ -1477,7 +1477,7 @@ async function applyBulkStatusChange() {
     console.error('Bulk update error:', error);
     alert('Failed to update some activities');
   }
-});
+}
 
 // ============= KEYBOARD SHORTCUTS =============
 
