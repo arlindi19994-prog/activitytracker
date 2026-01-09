@@ -24,7 +24,10 @@ function checkAuth() {
     return;
   }
   
-  document.getElementById('currentUser').textContent = currentUser.username;
+  const currentUserElement = document.getElementById('currentUser');
+  if (currentUserElement) {
+    currentUserElement.textContent = currentUser.username;
+  }
 }
 
 // API helper
@@ -2434,8 +2437,7 @@ function setupEventListeners() {
     });
   }
   
-  // Keyboard shortcuts
-  document.addEventListener('keydown', handleKeyboardShortcuts);
+  // Keyboard shortcuts handler is defined inline at line ~1481 - skip duplicate
 }
 
 // Call initialization when DOM is ready
