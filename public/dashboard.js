@@ -2451,11 +2451,7 @@ if (document.readyState === 'loading') {
 
 let unreadNotifications = 0;
 
-// Load notifications on page load
-loadNotifications();
-
-// Poll for new notifications every 30 seconds
-setInterval(loadNotifications, 30000);
+// loadNotifications() and setInterval are called from initializeApp() after auth is ready
 
 async function loadNotifications() {
   try {
